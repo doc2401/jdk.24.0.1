@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc,fixuphtml" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Module Import Declarations (Second Preview)</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="../resources/jdk-default.css" />
+  <link rel="stylesheet" href="../resources/spec-changes.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+
+<header id="title-block-header">
+<div class="navbar"><div><strong>Java SE 24 & JDK 24</strong></div><nav><ul><li><a href="../api/index.html">API</a>
+<li><a href="index.html">OTHER SPECIFICATIONS</a>
+<li><a href="man/index.html">TOOL GUIDES</a></ul></nav></div>
+
+<h1 class="title">Module Import Declarations (Second Preview)</h1>
+<p class="subtitle">Changes to the Java® Virtual Machine Specification •
+Version 24.0.1+9-30</p>
+</header>
+<nav id="TOC" role="doc-toc" title="Table Of Contents">
+<ul>
+<li><a href="#jvms-4" id="toc-jvms-4">Chapter 4: The <code>class</code>
+File Format</a>
+<ul>
+<li><a href="#jvms-4.7" id="toc-jvms-4.7">4.7 Attributes</a>
+<ul>
+<li><a href="#jvms-4.7.25" id="toc-jvms-4.7.25">4.7.25 The
+<code>Module</code> Attribute</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
+<main><p>This document describes changes to the <a
+href="https://docs.oracle.com/javase/specs/jvms/se23/html">Java Virtual Machine Specification</a>
+to support <em>Module Import Declarations</em>, which is a preview
+feature of Java SE 24. See <a
+href="https://openjdk.org/jeps/494">JEP 494</a> for an overview of the
+feature.</p>
+<p>A <a
+href="module-import-declarations-jls.html">companion document</a>
+describes the changes needed to the <a
+href="https://docs.oracle.com/javase/specs/jls/se23/html">Java Language Specification</a>
+to support Module Import Declarations.</p>
+<p>Changes are described with respect to existing sections of the JVMS.
+New text is indicated <strong>like this</strong> and deleted text is
+indicated <del>like this</del>. Explanation and discussion, as needed,
+is set aside in grey boxes.</p>
+<div class="editorial">
+<p>Changelog:</p>
+<p>2024-10: First draft.</p>
+</div>
+<h2 id="jvms-4">Chapter 4: The <code>class</code> File Format</h2>
+<h3 id="jvms-4.7">4.7 Attributes</h3>
+<h4 id="jvms-4.7.25">4.7.25 The <code>Module</code> Attribute</h4>
+<p>The <code>Module</code> attribute is a variable-length attribute in
+the <code>attributes</code> table of a <code>ClassFile</code> structure
+(<a
+href="https://docs.oracle.com/javase/specs/jvms/se24/html/jvms-4.html#jvms-4.1">4.1</a>).
+The <code>Module</code> attribute indicates the modules required by a
+module; the packages exported and opened by a module; and the services
+used and provided by a module.</p>
+<p>There may be at most one <code>Module</code> attribute in the
+<code>attributes</code> table of a <code>ClassFile</code> structure.</p>
+<p>The <code>Module</code> attribute has the following format:</p>
+<pre><code>Module_attribute {
+    u2 attribute_name_index;
+    u4 attribute_length;
+
+    u2 module_name_index;
+    u2 module_flags;
+    u2 module_version_index;
+
+    u2 requires_count;
+    {   u2 requires_index;
+        u2 requires_flags;
+        u2 requires_version_index;
+    } requires[requires_count];
+
+    u2 exports_count;
+    {   u2 exports_index;
+        u2 exports_flags;
+        u2 exports_to_count;
+        u2 exports_to_index[exports_to_count];
+    } exports[exports_count];
+
+    u2 opens_count;
+    {   u2 opens_index;
+        u2 opens_flags;
+        u2 opens_to_count;
+        u2 opens_to_index[opens_to_count];
+    } opens[opens_count];
+
+    u2 uses_count;
+    u2 uses_index[uses_count];
+
+    u2 provides_count;
+    {   u2 provides_index;
+        u2 provides_with_count;
+        u2 provides_with_index[provides_with_count];
+    } provides[provides_count];
+}</code></pre>
+<p>The items of the <code>Module_attribute</code> structure are as
+follows:</p>
+<dl>
+<dt>attribute_name_index</dt>
+<dd>
+<p>The value of the <code>attribute_name_index</code> item must be a
+valid index into the <code>constant_pool</code> table. The
+<code>constant_pool</code> entry at that index must be a
+<code>CONSTANT_Utf8_info</code> structure (<a
+href="https://docs.oracle.com/javase/specs/jvms/se24/html/jvms-4.html#jvms-4.4.7">4.4.7</a>)
+representing the string "<code>Module</code>".</p>
+</dd>
+<dt>attribute_length</dt>
+<dd>
+<p>The value of the <code>attribute_length</code> item indicates the
+length of the attribute, excluding the initial six bytes.</p>
+</dd>
+<dt>module_name_index</dt>
+<dd>
+<p>The value of the <code>module_name_index</code> item must be a valid
+index into the <code>constant_pool</code> table. The
+<code>constant_pool</code> entry at that index must be a
+<code>CONSTANT_Module_info</code> structure (<a
+href="https://docs.oracle.com/javase/specs/jvms/se24/html/jvms-4.html#jvms-4.4.11">4.4.11</a>)
+denoting the current module.</p>
+</dd>
+<dt>module_flags</dt>
+<dd>
+<p>The value of the <code>module_flags</code> item is as follows:</p>
+<dl>
+<dt>0x0020 (<code>ACC_OPEN</code>)</dt>
+<dd>
+<p>Indicates that this module is open.</p>
+</dd>
+<dt>0x1000 (<code>ACC_SYNTHETIC</code>)</dt>
+<dd>
+<p>Indicates that this module was not explicitly or implicitly
+declared.</p>
+</dd>
+<dt>0x8000 (<code>ACC_MANDATED</code>)</dt>
+<dd>
+<p>Indicates that this module was implicitly declared.</p>
+</dd>
+</dl>
+</dd>
+<dt>module_version_index</dt>
+<dd>
+<p>The value of the <code>module_version_index</code> item must be
+either zero or a valid index into the <code>constant_pool</code> table.
+If the value of the item is zero, then no version information about the
+current module is present. If the value of the item is nonzero, then the
+<code>constant_pool</code> entry at that index must be a
+<code>CONSTANT_Utf8_info</code> structure representing the version of
+the current module.</p>
+</dd>
+<dt>requires_count</dt>
+<dd>
+<p>The value of the <code>requires_count</code> item indicates the
+number of entries in the <code>requires</code> table.</p>
+<p>If the current module is <code>java.base</code>, then
+<code>requires_count</code> must be zero.</p>
+<p>If the current module is not <code>java.base</code>, then
+<code>requires_count</code> must be at least one.</p>
+</dd>
+<dt>requires[]</dt>
+<dd>
+<p>Each entry in the <code>requires</code> table specifies a dependence
+of the current module. The items in each entry are as follows:</p>
+<dl>
+<dt>requires_index</dt>
+<dd>
+<p>The value of the <code>requires_index</code> item must be a valid
+index into the <code>constant_pool</code> table. The
+<code>constant_pool</code> entry at that index must be a
+<code>CONSTANT_Module_info</code> structure denoting a module on which
+the current module depends.</p>
+<p>At most one entry in the <code>requires</code> table may specify a
+module of a given name with its <code>requires_index</code> item.</p>
+</dd>
+<dt>requires_flags</dt>
+<dd>
+<p>The value of the <code>requires_flags</code> item is as follows:</p>
+<dl>
+<dt>0x0020 (<code>ACC_TRANSITIVE</code>)</dt>
+<dd>
+<p>Indicates that any module which depends on the current module,
+implicitly declares a dependence on the module indicated by this
+entry.</p>
+</dd>
+<dt>0x0040 (<code>ACC_STATIC_PHASE</code>)</dt>
+<dd>
+<p>Indicates that this dependence is mandatory in the static phase,
+i.e., at compile time, but is optional in the dynamic phase, i.e., at
+run time.</p>
+</dd>
+<dt>0x1000 (<code>ACC_SYNTHETIC</code>)</dt>
+<dd>
+<p>Indicates that this dependence was not explicitly or implicitly
+declared in the source of the module declaration.</p>
+</dd>
+<dt>0x8000 (<code>ACC_MANDATED</code>)</dt>
+<dd>
+<p>Indicates that this dependence was implicitly declared in the source
+of the module declaration.</p>
+</dd>
+</dl>
+</dd>
+<dt>requires_version_index</dt>
+<dd>
+<p>The value of the <code>requires_version_index</code> item must be
+either zero or a valid index into the <code>constant_pool</code> table.
+If the value of the item is zero, then no version information about the
+dependence is present. If the value of the item is nonzero, then the
+<code>constant_pool</code> entry at that index must be a
+<code>CONSTANT_Utf8_info</code> structure representing the version of
+the module specified by <code>requires_index</code>.</p>
+</dd>
+</dl>
+<p>Unless the current module is <code>java.base</code>, exactly one
+entry in the <code>requires</code> table must have all of the
+following:</p>
+<ul>
+<li><p>A <code>requires_index</code> item that indicates
+<code>java.base</code>.</p></li>
+<li><p>A <code>requires_flags</code> item that has the
+<code>ACC_SYNTHETIC</code> flag not set. (The <code>ACC_MANDATED</code>
+<del>flag</del> <strong>and <code>ACC_TRANSITIVE</code> flags</strong>
+may be set.)</p></li>
+<li><p>If the <code>class</code> file version number is 54.0 or above, a
+<code>requires_flags</code> item that has <del>both</del> the
+<del><code>ACC_TRANSITIVE</code> and</del> <code>ACC_STATIC_PHASE</code>
+<del>flags</del> <strong>flag</strong> not set.</p></li>
+</ul>
+</dd>
+<dt>exports_count</dt>
+<dd>
+<p>The value of the <code>exports_count</code> item indicates the number
+of entries in the <code>exports</code> table.</p>
+</dd>
+<dt>exports[]</dt>
+<dd>
+<p>Each entry in the <code>exports</code> table specifies a package
+exported by the current module, such that <code>public</code> and
+<code>protected</code> types in the package, and their
+<code>public</code> and <code>protected</code> members, may be accessed
+from outside the current module, possibly from a limited set of "friend"
+modules.</p>
+<p>The items in each entry are as follows:</p>
+<dl>
+<dt>exports_index</dt>
+<dd>
+<p>The value of the <code>exports_index</code> item must be a valid
+index into the <code>constant_pool</code> table. The
+<code>constant_pool</code> entry at that index must be a
+<code>CONSTANT_Package_info</code> structure (<a
+href="https://docs.oracle.com/javase/specs/jvms/se24/html/jvms-4.html#jvms-4.4.12">4.4.12</a>)
+representing a package exported by the current module.</p>
+<p>At most one entry in the <code>exports</code> table may specify a
+package of a given name with its <code>exports_index</code> item.</p>
+</dd>
+<dt>exports_flags</dt>
+<dd>
+<p>The value of the <code>exports_flags</code> item is as follows:</p>
+<dl>
+<dt>0x1000 (<code>ACC_SYNTHETIC</code>)</dt>
+<dd>
+<p>Indicates that this export was not explicitly or implicitly declared
+in the source of the module declaration.</p>
+</dd>
+<dt>0x8000 (<code>ACC_MANDATED</code>)</dt>
+<dd>
+<p>Indicates that this export was implicitly declared in the source of
+the module declaration.</p>
+</dd>
+</dl>
+</dd>
+<dt>exports_to_count</dt>
+<dd>
+<p>The value of the <code>exports_to_count</code> indicates the number
+of entries in the <code>exports_to_index</code> table.</p>
+<p>If <code>exports_to_count</code> is zero, then this package is
+exported by the current module in an <em>unqualified</em> fashion; code
+in any other module may access the types and members in the package.</p>
+<p>If <code>exports_to_count</code> is nonzero, then this package is
+exported by the current module in a <em>qualified</em> fashion; only
+code in the modules listed in the <code>exports_to_index</code> table
+may access the types and members in the package.</p>
+</dd>
+<dt>exports_to_index[]</dt>
+<dd>
+<p>The value of each entry in the <code>exports_to_index</code> table
+must be a valid index into the <code>constant_pool</code> table. The
+<code>constant_pool</code> entry at that index must be a
+<code>CONSTANT_Module_info</code> structure denoting a module whose code
+can access the types and members in this exported package.</p>
+<p>For each entry in the <code>exports</code> table, at most one entry
+in its <code>exports_to_index</code> table may specify a module of a
+given name.</p>
+</dd>
+</dl>
+</dd>
+<dt>opens_count</dt>
+<dd>
+<p>The value of the <code>opens_count</code> item indicates the number
+of entries in the <code>opens</code> table.</p>
+<p><code>opens_count</code> must be zero if the current module is
+open.</p>
+</dd>
+<dt>opens[]</dt>
+<dd>
+<p>Each entry in the <code>opens</code> table specifies a package opened
+by the current module, such that all types in the package, and all their
+members, may be accessed from outside the current module via the
+reflection libraries of the Java SE Platform, possibly from a limited
+set of "friend" modules.</p>
+<p>The items in each entry are as follows:</p>
+<dl>
+<dt>opens_index</dt>
+<dd>
+<p>The value of the <code>opens_index</code> item must be a valid index
+into the <code>constant_pool</code> table. The
+<code>constant_pool</code> entry at that index must be a
+<code>CONSTANT_Package_info</code> structure representing a package
+opened by the current module.</p>
+<p>At most one entry in the <code>opens</code> table may specify a
+package of a given name with its <code>opens_index</code> item.</p>
+</dd>
+<dt>opens_flags</dt>
+<dd>
+<p>The value of the <code>opens_flags</code> item is as follows:</p>
+<dl>
+<dt>0x1000 (<code>ACC_SYNTHETIC</code>)</dt>
+<dd>
+<p>Indicates that this opening was not explicitly or implicitly declared
+in the source of the module declaration.</p>
+</dd>
+<dt>0x8000 (<code>ACC_MANDATED</code>)</dt>
+<dd>
+<p>Indicates that this opening was implicitly declared in the source of
+the module declaration.</p>
+</dd>
+</dl>
+</dd>
+<dt>opens_to_count</dt>
+<dd>
+<p>The value of the <code>opens_to_count</code> indicates the number of
+entries in the <code>opens_to_index</code> table.</p>
+<p>If <code>opens_to_count</code> is zero, then this package is opened
+by the current module in an <em>unqualified</em> fashion; code in any
+other module may reflectively access the types and members in the
+package.</p>
+<p>If <code>opens_to_count</code> is nonzero, then this package is
+opened by the current module in a <em>qualified</em> fashion; only code
+in the modules listed in the <code>opens_to_index</code> table may
+reflectively access the types and members in the package.</p>
+</dd>
+<dt>opens_to_index[]</dt>
+<dd>
+<p>The value of each entry in the <code>opens_to_index</code> table must
+be a valid index into the <code>constant_pool</code> table. The
+<code>constant_pool</code> entry at that index must be a
+<code>CONSTANT_Module_info</code> structure denoting a module whose code
+can access the types and members in this opened package.</p>
+<p>For each entry in the <code>opens</code> table, at most one entry in
+its <code>opens_to_index</code> table may specify a module of a given
+name.</p>
+</dd>
+</dl>
+</dd>
+<dt>uses_count</dt>
+<dd>
+<p>The value of the <code>uses_count</code> item indicates the number of
+entries in the <code>uses_index</code> table.</p>
+</dd>
+<dt>uses_index[]</dt>
+<dd>
+<p>The value of each entry in the <code>uses_index</code> table must be
+a valid index into the <code>constant_pool</code> table. The
+<code>constant_pool</code> entry at that index must be a
+<code>CONSTANT_Class_info</code> structure (<a
+href="https://docs.oracle.com/javase/specs/jvms/se24/html/jvms-4.html#jvms-4.4.1">4.4.1</a>)
+representing a service interface which the current module may discover
+via <code>java.util.ServiceLoader</code>.</p>
+<p>At most one entry in the <code>uses_index</code> table may specify a
+service interface of a given name.</p>
+</dd>
+<dt>provides_count</dt>
+<dd>
+<p>The value of the <code>provides_count</code> item indicates the
+number of entries in the <code>provides</code> table.</p>
+</dd>
+<dt>provides[]</dt>
+<dd>
+<p>Each entry in the <code>provides</code> table represents a service
+implementation for a given service interface.</p>
+<p>The items in each entry are as follows:</p>
+<dl>
+<dt>provides_index</dt>
+<dd>
+<p>The value of the <code>provides_index</code> item must be a valid
+index into the <code>constant_pool</code> table. The
+<code>constant_pool</code> entry at that index must be a
+<code>CONSTANT_Class_info</code> structure representing a service
+interface for which the current module provides a service
+implementation.</p>
+<p>At most one entry in the <code>provides</code> table may specify a
+service interface of a given name with its <code>provides_index</code>
+item.</p>
+</dd>
+<dt>provides_with_count</dt>
+<dd>
+<p>The value of the <code>provides_with_count</code> indicates the
+number of entries in the <code>provides_with_index</code> table.</p>
+<p><code>provides_with_count</code> must be nonzero.</p>
+</dd>
+<dt>provides_with_index[]</dt>
+<dd>
+<p>The value of each entry in the <code>provides_with_index</code> table
+must be a valid index into the <code>constant_pool</code> table. The
+<code>constant_pool</code> entry at that index must be a
+<code>CONSTANT_Class_info</code> structure representing a service
+implementation for the service interface specified by
+<code>provides_index</code>.</p>
+<p>For each entry in the <code>provides</code> table, at most one entry
+in its <code>provides_with_index</code> table may specify a service
+implementation of a given name.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</main><footer class="legal-footer"><hr/><a href="../legal/copyright.html">Copyright</a> &copy; 1993, 2025, Oracle and/or its affiliates, 500 Oracle Parkway, Redwood Shores, CA 94065 USA.<br>All rights reserved. Use is subject to <a href="https://www.oracle.com/java/javase/terms/license/java24speclicense.html">license terms</a> and the <a href="https://www.oracle.com/technetwork/java/redist-137594.html">documentation redistribution policy</a>. <!-- Version 24.0.1+9-30 --></footer>
+</body>
+</html>
